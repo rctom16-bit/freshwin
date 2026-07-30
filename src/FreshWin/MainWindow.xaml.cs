@@ -450,7 +450,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         RunQueue.Clear();
-        foreach (var item in apps.Cast<QueueItem>().Concat(tweaks))
+
+        // A restore point is only worth anything if it is taken before the first change.
+        var ordered = tweaks.Where(t => t.RunFirst).Cast<QueueItem>()
+            .Concat(apps)
+            .Concat(tweaks.Where(t => !t.RunFirst));
+
+        foreach (var item in ordered)
         {
             item.Status = RunStatus.Pending;
             item.StatusDetail = null;

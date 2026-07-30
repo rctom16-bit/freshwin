@@ -16,9 +16,9 @@ config files to edit.
 │  …             │  ┌────────────────┐ ┌────────────────┐ ┌─────────────┐ │
 │                │  │ GC  Google     │ │ MF  Mozilla  ✓ │ │ 7Z  7-Zip ✓ │ │
 │ TUNE WINDOWS   │  │     Chrome     │ │     Firefox    │ │             │ │
-│  All settings 24  └────────────────┘ └────────────────┘ └─────────────┘ │
-│  File Explorer 5                                                        │
-│  Privacy       4  12 apps + 5 settings selected  [ Install selected → ] │
+│  All settings 40  └────────────────┘ └────────────────┘ └─────────────┘ │
+│  Privacy      10                                                        │
+│  Performance   9  12 apps + 5 settings selected  [ Install selected → ] │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -29,12 +29,18 @@ Development, Utilities, Files & Backup, Documents, Security and Runtimes. Every 
 is verified against the official winget index. An **Essentials** preset ticks the 18 apps
 almost every PC wants.
 
-**Tune Windows — 24 settings** across File Explorer, Taskbar & Start, Appearance, Privacy
-and Performance: show file extensions, open Explorer on This PC, hide the Widgets and Chat
-buttons, empty the Start "Recommended" list, dark mode, the classic right-click menu, turn
-off the advertising ID and web results in search, high performance power plan, free the
-hibernation file, allow long paths, and more. A **Recommended** preset ticks the 11 that
-are safe wins on any PC.
+**Tune Windows — 40 settings** across Safety, File Explorer, Taskbar & Start, Appearance,
+Privacy and Performance: show file extensions, open Explorer on This PC, hide the Widgets
+and Chat buttons, "End task" in the taskbar menu, empty the Start "Recommended" list, dark
+mode, the classic right-click menu, no menu delay, turn off Recall and Copilot, kill the
+advertising ID, lock-screen ads, Settings promos and web results in search, stop Game Bar
+recording in the background, high performance power plan, hardware-accelerated GPU
+scheduling, mouse acceleration off, Storage Sense on, free the hibernation file, allow long
+paths, and more. A **Recommended** preset ticks the 20 that are safe wins on any PC.
+
+The first item is **Create a restore point** — it is hoisted to the front of the run, ahead
+of every install, so there is a System Restore snapshot to fall back on before anything
+changes.
 
 Both lists feed one run page with live per-item status, overall progress and a details log
 carrying winget's own output and every registry value written.
@@ -67,16 +73,16 @@ services, no RAM "optimising", no removing Defender, no third-party debloat scri
 break more than they fix and cannot be undone reliably. If that is what you are after, this
 is the wrong tool.
 
-Four settings need administrator rights and are marked `admin` on the card. Explorer and
+Seven settings need administrator rights and are marked `admin` on the card. Explorer and
 taskbar changes need Explorer restarted, which the app offers as a button when the run
-finishes.
+finishes; a few need a sign-out or reboot and say so.
 
 ## Requirements
 
 - Windows 10 (1809+) or Windows 11, 64-bit
 - winget / "App Installer" for the software half — preinstalled on current Windows; the app
   links to the Microsoft Store page if it is missing. The settings half works without it.
-- Administrator rights for most installs and the four `admin` settings
+- Administrator rights for most installs and the seven `admin` settings
 
 ## Getting the app
 

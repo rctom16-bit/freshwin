@@ -41,6 +41,9 @@ public sealed class Tweak : QueueItem
 
     public bool RequiresAdmin { get; init; }
 
+    /// <summary>Hoisted to the very front of the run, ahead of any installs.</summary>
+    public bool RunFirst { get; init; }
+
     public RestartNeed Restart { get; init; } = RestartNeed.None;
 
     public IReadOnlyList<RegValue> Values { get; init; } = Array.Empty<RegValue>();

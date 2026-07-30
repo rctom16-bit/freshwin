@@ -21,6 +21,9 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Check XAML bindings
+        run: python tools/check_bindings.py
+
       - name: Publish single-file exe
         run: dotnet publish src/FreshWin/FreshWin.csproj -c Release -o publish
 

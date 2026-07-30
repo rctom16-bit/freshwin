@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Lets the WPF app be built / published from Linux + macOS CI too. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+
+    <AssemblyName>FreshWin</AssemblyName>
+    <RootNamespace>FreshWin</RootNamespace>
+    <Product>FreshWin</Product>
+    <Company>FreshWin</Company>
+    <AssemblyTitle>FreshWin</AssemblyTitle>
+    <Description>Pick the software you want on a fresh Windows PC and install it all in one click.</Description>
+    <Version>1.0.0</Version>
+    <Copyright>Copyright (c) 2026</Copyright>
+
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
+
+    <!-- Defaults for `dotnet publish`: one portable .exe that needs nothing pre-installed. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>none</DebugType>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+</Project>

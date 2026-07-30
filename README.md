@@ -18,7 +18,9 @@ config files to edit.
 │ TUNE WINDOWS   │  │     Chrome     │ │     Firefox    │ │             │ │
 │  All settings 40  └────────────────┘ └────────────────┘ └─────────────┘ │
 │  Privacy      10                                                        │
-│  Performance   9  12 apps + 5 settings selected  [ Install selected → ] │
+│  Performance   9                                                        │
+│ REMOVE            12 apps + 5 settings + 3 removals selected            │
+│  All preinst. 28                                 [ Install selected → ] │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -42,8 +44,32 @@ The first item is **Create a restore point** — it is hoisted to the front of t
 of every install, so there is a System Restore snapshot to fall back on before anything
 changes.
 
-Both lists feed one run page with live per-item status, overall progress and a details log
-carrying winget's own output and every registry value written.
+**Remove — 28 preinstalled apps** that Windows and OEMs put on a new PC: News, Weather,
+Maps, Tips, Solitaire, Clipchamp, Paint 3D, 3D Viewer, Mixed Reality Portal, Cortana, the
+consumer Teams, Skype, People and the rest. Cards say whether the app is actually **on this
+PC**, and ones with a real downside carry a short warning ("this is the default music
+player"). A **Recommended** preset ticks the 16 nobody misses.
+
+This is a short, named list, not a debloat script. Nothing that belongs to the shell is in
+it: no Store, no App Installer (which provides winget), no Snipping Tool, no Terminal, no
+runtime libraries. **Removals are the one thing the undo file cannot restore** — the way
+back is reinstalling from the Microsoft Store.
+
+All three lists feed one run page with live per-item status, overall progress and a details
+log carrying winget's own output and every registry value written. A restore point runs
+first, then removals, then installs, then settings.
+
+## Profiles: set up the next PC like this one
+
+- **Clone this PC** reads every winget-known program installed here and writes it to a
+  profile file.
+- **Load profile** on the new machine ticks everything in it. Programs that are not in the
+  built-in catalogue still come along, under a "From profile" category.
+- **Save selection** stores whatever you have ticked right now — software, settings and
+  removals together — so the same setup can be replayed on any number of machines.
+
+Profiles are small readable JSON. On the software cards, anything already on the PC is
+marked **installed**, so a second run never repeats work.
 
 - **Stop after current** rather than killing an installer half-way.
 - Cards show what is **already installed / already on**, so a second run is not destructive.
@@ -138,9 +164,12 @@ new()
 | `src/FreshWin/Themes/Theme.xaml` | Dark theme, control styles, vector icons |
 | `src/FreshWin/Services/Catalog.cs` | The software catalogue |
 | `src/FreshWin/Services/Tweaks.cs` | The Windows settings catalogue |
+| `src/FreshWin/Services/Bloatware.cs` | The removable preinstalled apps |
+| `src/FreshWin/Services/AppxService.cs` | Listing and removing Store packages |
+| `src/FreshWin/Services/ProfileService.cs` | Saving and loading profiles |
 | `src/FreshWin/Services/TweakEngine.cs` | Registry read/write, undo files, Explorer restart |
 | `src/FreshWin/Services/WingetService.cs` | winget process handling and exit codes |
-| `src/FreshWin/Models/` | `QueueItem` base, `AppEntry`, `Tweak`, `CategoryEntry` |
+| `src/FreshWin/Models/` | `QueueItem` base, `AppEntry`, `Tweak`, `BloatApp`, `CategoryEntry` |
 | `tools/make_icon.py` | Regenerates `Assets/icon.ico` |
 
 ## Notes
@@ -150,3 +179,5 @@ new()
 - A few installs need a restart to finish; those report *Installed – restart needed*.
 - Freeing the hibernation file also turns off Fast Startup. Revert it if you want that back.
 - Closing the window mid-run leaves the current step to finish in the background.
+- Removing an app also removes the provisioned copy, so it stays gone for new user
+  accounts — that part needs administrator rights and is skipped without them.

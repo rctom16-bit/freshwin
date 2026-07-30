@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using Microsoft.Win32;
 using FreshWin.Models;
 using FreshWin.Services;
 
@@ -19,20 +20,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private enum BannerActionKind { None, RestartElevated, OpenStore }
 
-    private enum Pane { Software, Tweaks }
+    private enum Pane { Software, Tweaks, Remove }
 
     private readonly List<AppEntry> _apps = Catalog.Build();
     private readonly List<Tweak> _tweaks = Tweaks.Build();
+    private readonly List<BloatApp> _bloat = Bloatware.Build();
     private readonly WingetService _winget = new();
     private readonly TweakEngine _engine = new();
 
     private readonly CollectionViewSource _appView;
     private readonly CollectionViewSource _tweakView;
+    private readonly CollectionViewSource _bloatView;
 
     private Pane _pane = Pane.Software;
     private string _search = "";
     private CategoryEntry? _category;
     private CategoryEntry? _group;
+    private CategoryEntry? _bloatGroup;
     private BannerActionKind _bannerAction = BannerActionKind.None;
     private bool _isRunning;
     private bool _stopRequested;
@@ -49,8 +53,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _tweakView = new CollectionViewSource { Source = _tweaks };
         _tweakView.Filter += (_, e) => e.Accepted = e.Item is Tweak tweak && ShowTweak(tweak);
 
+        _bloatView = new CollectionViewSource { Source = _bloat };
+        _bloatView.Filter += (_, e) => e.Accepted = e.Item is BloatApp bloat && ShowBloat(bloat);
+
         foreach (var app in _apps) app.PropertyChanged += OnItemPropertyChanged;
         foreach (var tweak in _tweaks) tweak.PropertyChanged += OnItemPropertyChanged;
+        foreach (var bloat in _bloat) bloat.PropertyChanged += OnItemPropertyChanged;
 
         BuildNavigation();
         _ready = true;
@@ -68,10 +76,12 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public ObservableCollection<CategoryEntry> Categories { get; } = new();
     public ObservableCollection<CategoryEntry> Groups { get; } = new();
+    public ObservableCollection<CategoryEntry> BloatGroups { get; } = new();
     public ObservableCollection<QueueItem> RunQueue { get; } = new();
 
     public ICollectionView VisibleApps => _appView.View;
     public ICollectionView VisibleTweaks => _tweakView.View;
+    public ICollectionView VisibleBloat => _bloatView.View;
 
     private string _paneTitle = "Set up this PC";
     public string PaneTitle
@@ -134,6 +144,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         TweakEngine.RefreshState(_tweaks);
+        _ = AppxService.RefreshStateAsync(_bloat, CancellationToken.None);
         UndoButton.IsEnabled = _engine.UndoFiles().Count > 0;
         TitleBarHint.Text = IsElevated() ? "administrator" : "";
 
@@ -159,6 +170,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 "Restart as admin",
                 BannerActionKind.RestartElevated);
         }
+
+        if (_winget.IsAvailable) await ScanInstalledAsync();
 
         SearchInput.Focus();
     }
@@ -273,6 +286,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 Total = _tweaks.Count(t => t.Group == name)
             });
         }
+
+        BloatGroups.Add(new CategoryEntry
+        {
+            Name = "All preinstalled",
+            IsAll = true,
+            Icon = "M5 7h14 M9 7V5h6v2 M7 7l1 13h8l1-13 M10.5 10.5v6 M13.5 10.5v6",
+            Total = _bloat.Count
+        });
+
+        foreach (var (name, icon) in Bloatware.GroupOrder)
+        {
+            BloatGroups.Add(new CategoryEntry
+            {
+                Name = name,
+                Icon = icon,
+                Total = _bloat.Count(b => b.Group == name)
+            });
+        }
     }
 
     private void CategoryList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -291,35 +322,46 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         SwitchPane(Pane.Tweaks);
     }
 
+    private void BloatList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_syncingNav || BloatList.SelectedItem is null) return;
+
+        _bloatGroup = BloatList.SelectedItem as CategoryEntry;
+        SwitchPane(Pane.Remove);
+    }
+
     private void SwitchPane(Pane pane)
     {
         _pane = pane;
 
         _syncingNav = true;
-        if (pane == Pane.Software) GroupList.SelectedItem = null;
-        else CategoryList.SelectedItem = null;
+        if (pane != Pane.Software) CategoryList.SelectedItem = null;
+        if (pane != Pane.Tweaks) GroupList.SelectedItem = null;
+        if (pane != Pane.Remove) BloatList.SelectedItem = null;
         _syncingNav = false;
 
-        var software = pane == Pane.Software;
+        AppScroller.Visibility = Visible(pane == Pane.Software);
+        TweakScroller.Visibility = Visible(pane == Pane.Tweaks);
+        BloatScroller.Visibility = Visible(pane == Pane.Remove);
 
-        AppScroller.Visibility = software ? Visibility.Visible : Visibility.Collapsed;
-        TweakScroller.Visibility = software ? Visibility.Collapsed : Visibility.Visible;
-        SoftwareTools.Visibility = software ? Visibility.Visible : Visibility.Collapsed;
-        TweakTools.Visibility = software ? Visibility.Collapsed : Visibility.Visible;
+        SoftwareTools.Visibility = Visible(pane == Pane.Software);
+        TweakTools.Visibility = Visible(pane == Pane.Tweaks);
+        BloatTools.Visibility = Visible(pane == Pane.Remove);
 
-        if (software)
+        (PaneTitle, PaneSubtitle) = pane switch
         {
-            PaneTitle = "Set up this PC";
-            PaneSubtitle = "Tick everything you want, then hit Install – the rest is automatic.";
-        }
-        else
-        {
-            PaneTitle = "Tune Windows";
-            PaneSubtitle = "Only documented, reversible settings. Every change is recorded so it can be undone.";
-        }
+            Pane.Software => ("Set up this PC",
+                "Tick everything you want, then hit Install – the rest is automatic."),
+            Pane.Tweaks => ("Tune Windows",
+                "Only documented, reversible settings. Every change is recorded so it can be undone."),
+            _ => ("Remove preinstalled apps",
+                "A short, named list – not a debloat script. Everything here can be reinstalled from the Store.")
+        };
 
         RefreshView();
     }
+
+    private static Visibility Visible(bool show) => show ? Visibility.Visible : Visibility.Collapsed;
 
     // ------------------------------------------------------------- filtering
 
@@ -335,15 +377,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         return _group is null || _group.IsAll || tweak.Group == _group.Name;
     }
 
+    private bool ShowBloat(BloatApp bloat)
+    {
+        if (!string.IsNullOrWhiteSpace(_search)) return bloat.Matches(_search);
+        return _bloatGroup is null || _bloatGroup.IsAll || bloat.Group == _bloatGroup.Name;
+    }
+
     private void RefreshView()
     {
         if (!_ready) return;
 
         _appView.View.Refresh();
         _tweakView.View.Refresh();
+        _bloatView.View.Refresh();
 
-        EmptyHint.Visibility = _appView.View.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
-        EmptyTweakHint.Visibility = _tweakView.View.IsEmpty ? Visibility.Visible : Visibility.Collapsed;
+        EmptyHint.Visibility = Visible(_appView.View.IsEmpty);
+        EmptyTweakHint.Visibility = Visible(_tweakView.View.IsEmpty);
+        EmptyBloatHint.Visibility = Visible(_bloatView.View.IsEmpty);
     }
 
     private void SearchInput_TextChanged(object sender, TextChangedEventArgs e)
@@ -363,6 +413,14 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         var apps = _apps.Where(a => a.IsSelected).ToList();
         var tweaks = _tweaks.Where(t => t.IsSelected).ToList();
+        var bloat = _bloat.Where(b => b.IsSelected).ToList();
+
+        foreach (var group in BloatGroups)
+        {
+            group.SelectedCount = group.IsAll
+                ? bloat.Count
+                : bloat.Count(b => b.Group == group.Name);
+        }
 
         foreach (var category in Categories)
         {
@@ -378,25 +436,34 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 : tweaks.Count(t => t.Group == group.Name);
         }
 
-        HasSelection = apps.Count + tweaks.Count > 0;
+        HasSelection = apps.Count + tweaks.Count + bloat.Count > 0;
 
-        RunButtonText = apps.Count == 0 && tweaks.Count > 0 ? "Apply selected" : "Install selected";
+        RunButtonText = apps.Count == 0 && (tweaks.Count > 0 || bloat.Count > 0)
+            ? "Apply selected"
+            : "Install selected";
 
         if (!HasSelection)
         {
             SelectionHeadline = "Nothing selected yet";
-            SelectionDetail = _pane == Pane.Software
-                ? "Pick the apps you want, or start with Essentials."
-                : "Pick the settings you want, or start with Recommended.";
+            SelectionDetail = _pane switch
+            {
+                Pane.Software => "Pick the apps you want, or start with Essentials.",
+                Pane.Tweaks => "Pick the settings you want, or start with Recommended.",
+                _ => "Pick what you want gone, or start with Recommended."
+            };
             return;
         }
 
         var parts = new List<string>();
         if (apps.Count > 0) parts.Add(apps.Count == 1 ? "1 app" : $"{apps.Count} apps");
         if (tweaks.Count > 0) parts.Add(tweaks.Count == 1 ? "1 setting" : $"{tweaks.Count} settings");
+        if (bloat.Count > 0) parts.Add(bloat.Count == 1 ? "1 removal" : $"{bloat.Count} removals");
         SelectionHeadline = string.Join(" + ", parts) + " selected";
 
-        var names = apps.Select(a => a.Name).Concat(tweaks.Select(t => t.Name)).ToList();
+        var names = apps.Select(a => a.Name)
+            .Concat(tweaks.Select(t => t.Name))
+            .Concat(bloat.Select(b => b.Name))
+            .ToList();
         var rest = names.Count - 4;
         SelectionDetail = rest > 0
             ? $"{string.Join(", ", names.Take(4))} + {rest} more"
@@ -413,20 +480,44 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         foreach (var tweak in _tweaks) tweak.IsSelected = tweak.Recommended;
     }
 
+    private void RecommendedBloat_Click(object sender, RoutedEventArgs e)
+    {
+        // Never tick something the scan says is not on this PC.
+        foreach (var bloat in _bloat)
+            bloat.IsSelected = bloat.Recommended && bloat.IsPresent != false;
+    }
+
     private void SelectAllShown_Click(object sender, RoutedEventArgs e)
     {
-        if (_pane == Pane.Software)
-            foreach (var app in _appView.View.OfType<AppEntry>().ToList()) app.IsSelected = true;
-        else
-            foreach (var tweak in _tweakView.View.OfType<Tweak>().ToList()) tweak.IsSelected = true;
+        switch (_pane)
+        {
+            case Pane.Software:
+                foreach (var app in _appView.View.OfType<AppEntry>().ToList()) app.IsSelected = true;
+                break;
+            case Pane.Tweaks:
+                foreach (var tweak in _tweakView.View.OfType<Tweak>().ToList()) tweak.IsSelected = true;
+                break;
+            default:
+                foreach (var bloat in _bloatView.View.OfType<BloatApp>().ToList())
+                    if (bloat.IsPresent != false) bloat.IsSelected = true;
+                break;
+        }
     }
 
     private void ClearPane_Click(object sender, RoutedEventArgs e)
     {
-        if (_pane == Pane.Software)
-            foreach (var app in _apps) app.IsSelected = false;
-        else
-            foreach (var tweak in _tweaks) tweak.IsSelected = false;
+        switch (_pane)
+        {
+            case Pane.Software:
+                foreach (var app in _apps) app.IsSelected = false;
+                break;
+            case Pane.Tweaks:
+                foreach (var tweak in _tweaks) tweak.IsSelected = false;
+                break;
+            default:
+                foreach (var bloat in _bloat) bloat.IsSelected = false;
+                break;
+        }
     }
 
     // ------------------------------------------------------------------- run
@@ -437,7 +528,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         var apps = _apps.Where(a => a.IsSelected).ToList();
         var tweaks = _tweaks.Where(t => t.IsSelected).ToList();
-        if (apps.Count + tweaks.Count == 0) return;
+        var bloat = _bloat.Where(b => b.IsSelected).ToList();
+        if (apps.Count + tweaks.Count + bloat.Count == 0) return;
 
         if (apps.Count > 0 && !_winget.IsAvailable)
         {
@@ -452,7 +544,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         RunQueue.Clear();
 
         // A restore point is only worth anything if it is taken before the first change.
+        // Removals run before installs so a removed app cannot fight a fresh one.
         var ordered = tweaks.Where(t => t.RunFirst).Cast<QueueItem>()
+            .Concat(bloat)
             .Concat(apps)
             .Concat(tweaks.Where(t => !t.RunFirst));
 
@@ -467,7 +561,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         RunPage.Visibility = Visibility.Visible;
 
         LogBox.Clear();
-        AppendLog($"FreshWin – {apps.Count} app(s) and {tweaks.Count} setting(s)");
+        AppendLog($"FreshWin – {apps.Count} app(s), {tweaks.Count} setting(s), {bloat.Count} removal(s)");
         if (apps.Count > 0) AppendLog($"winget {_winget.Version}");
         AppendLog(IsElevated() ? "Running elevated." : "Running WITHOUT admin rights – some steps may fail.");
         AppendLog("");
@@ -490,7 +584,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         var total = RunQueue.Count;
         var done = 0;
-        int installed = 0, applied = 0, already = 0, failed = 0, skipped = 0, restart = 0;
+        int installed = 0, applied = 0, removed = 0, already = 0, failed = 0, skipped = 0, restart = 0;
         var needsExplorer = false;
 
         SetProgress(0, total);
@@ -524,6 +618,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                         else if (status == RunStatus.AlreadyDone) already++;
                         else if (status == RunStatus.NeedsRestart) { installed++; restart++; }
                         else failed++;
+                        break;
+                    }
+
+                    case BloatApp bloat:
+                    {
+                        if (bloat.IsPresent == false)
+                        {
+                            bloat.Status = RunStatus.AlreadyDone;
+                            already++;
+                            break;
+                        }
+
+                        await AppxService.RemoveAsync(bloat, AppendLog, CancellationToken.None);
+                        bloat.IsPresent = false;
+                        bloat.Status = RunStatus.Done;
+                        removed++;
                         break;
                     }
 
@@ -571,10 +681,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         UndoButton.IsEnabled = _engine.UndoFiles().Count > 0;
 
         _isRunning = false;
-        Finish(installed, applied, already, failed, skipped, restart, needsExplorer);
+        Finish(installed, applied, removed, already, failed, skipped, restart, needsExplorer);
     }
 
-    private void Finish(int installed, int applied, int already, int failed, int skipped, int restart, bool needsExplorer)
+    private void Finish(int installed, int applied, int removed, int already, int failed, int skipped, int restart, bool needsExplorer)
     {
         StopButton.Visibility = Visibility.Collapsed;
         BackButton.Visibility = Visibility.Visible;
@@ -586,6 +696,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var parts = new List<string>();
         if (installed > 0) parts.Add($"{installed} installed");
         if (applied > 0) parts.Add($"{applied} applied");
+        if (removed > 0) parts.Add($"{removed} removed");
         if (already > 0) parts.Add($"{already} already set");
         if (skipped > 0) parts.Add($"{skipped} skipped");
         if (failed > 0) parts.Add($"{failed} failed");
@@ -629,6 +740,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         TweakEngine.RefreshState(_tweaks);
+        _ = AppxService.RefreshStateAsync(_bloat, CancellationToken.None);
 
         RunPage.Visibility = Visibility.Collapsed;
         PickPage.Visibility = Visibility.Visible;
@@ -643,6 +755,235 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         RestartExplorerButton.IsEnabled = false;
         TweakEngine.RestartExplorer();
         AppendLog("Explorer restarted.");
+    }
+
+    // ---------------------------------------------------------------- profiles
+
+    /// <summary>Marks catalogue entries that are already on this PC.</summary>
+    private async Task ScanInstalledAsync()
+    {
+        var ids = await _winget.ExportInstalledAsync(CancellationToken.None);
+        if (ids.Count == 0) return;
+
+        var installed = new HashSet<string>(ids, StringComparer.OrdinalIgnoreCase);
+        foreach (var app in _apps) app.IsPresent = installed.Contains(app.Id);
+
+        _installedIds = installed;
+    }
+
+    private HashSet<string> _installedIds = new(StringComparer.OrdinalIgnoreCase);
+
+    private SetupProfile BuildProfile(IEnumerable<string> ids)
+    {
+        var profile = new SetupProfile
+        {
+            Install = ids.Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToList(),
+            Settings = _tweaks.Where(t => t.IsSelected).Select(t => t.Name).ToList(),
+            Remove = _bloat.Where(b => b.IsSelected).Select(b => b.PackageName).ToList()
+        };
+
+        // Ids the built-in catalogue does not know need a readable label of their own.
+        var known = _apps.Select(a => a.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var id in profile.Install.Where(id => !known.Contains(id)))
+            profile.Names[id] = PrettyName(id);
+
+        return profile;
+    }
+
+    private static string PrettyName(string id)
+    {
+        var cut = id.LastIndexOf('.');
+        return cut > 0 && cut < id.Length - 1 ? id[(cut + 1)..] : id;
+    }
+
+    private async void CloneThisPc_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isRunning) return;
+
+        if (!_winget.IsAvailable)
+        {
+            MessageBox.Show("winget is not available, so this PC cannot be scanned.", "FreshWin");
+            return;
+        }
+
+        ScanButton.IsEnabled = false;
+        ScanButton.Content = "Scanning…";
+
+        try
+        {
+            await ScanInstalledAsync();
+
+            if (_installedIds.Count == 0)
+            {
+                MessageBox.Show("winget did not report any installed packages it recognises.", "FreshWin");
+                return;
+            }
+
+            var profile = BuildProfile(_installedIds);
+            var inCatalogue = profile.Install.Count - profile.Names.Count;
+
+            var dialog = new SaveFileDialog
+            {
+                Title = "Save this PC as a profile",
+                FileName = $"{Environment.MachineName.ToLowerInvariant()}.freshwin.json",
+                Filter = "FreshWin profile (*.json)|*.json|All files (*.*)|*.*",
+                DefaultExt = ".json"
+            };
+
+            if (dialog.ShowDialog(this) != true) return;
+
+            ProfileService.Save(dialog.FileName, profile);
+
+            MessageBox.Show(
+                $"{profile.Install.Count} installed program(s) written to the profile " +
+                $"({inCatalogue} of them in the built-in catalogue).\n\n" +
+                "Take the file to the new PC and use \"Load profile\" there.",
+                "FreshWin");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"This PC could not be scanned.\n\n{ex.Message}", "FreshWin",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        finally
+        {
+            ScanButton.IsEnabled = true;
+            ScanButton.Content = "Clone this PC";
+        }
+    }
+
+    private void SaveProfile_Click(object sender, RoutedEventArgs e)
+    {
+        var selected = _apps.Where(a => a.IsSelected).Select(a => a.Id).ToList();
+        if (selected.Count == 0 && !_tweaks.Any(t => t.IsSelected) && !_bloat.Any(b => b.IsSelected))
+        {
+            MessageBox.Show("Nothing is selected yet, so there is nothing to save.", "FreshWin");
+            return;
+        }
+
+        var dialog = new SaveFileDialog
+        {
+            Title = "Save the current selection",
+            FileName = "my-setup.freshwin.json",
+            Filter = "FreshWin profile (*.json)|*.json|All files (*.*)|*.*",
+            DefaultExt = ".json"
+        };
+
+        if (dialog.ShowDialog(this) != true) return;
+
+        try
+        {
+            ProfileService.Save(dialog.FileName, BuildProfile(selected));
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"The profile could not be saved.\n\n{ex.Message}", "FreshWin",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void LoadProfile_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isRunning) return;
+
+        var dialog = new OpenFileDialog
+        {
+            Title = "Load a profile",
+            Filter = "FreshWin profile (*.json)|*.json|All files (*.*)|*.*"
+        };
+
+        if (dialog.ShowDialog(this) != true) return;
+
+        SetupProfile profile;
+        try
+        {
+            profile = ProfileService.Load(dialog.FileName);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"That file could not be read as a profile.\n\n{ex.Message}", "FreshWin",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        ApplyProfile(profile);
+    }
+
+    private void ApplyProfile(SetupProfile profile)
+    {
+        foreach (var app in _apps) app.IsSelected = false;
+        foreach (var tweak in _tweaks) tweak.IsSelected = false;
+        foreach (var bloat in _bloat) bloat.IsSelected = false;
+
+        var byId = _apps.ToDictionary(a => a.Id, StringComparer.OrdinalIgnoreCase);
+        var added = 0;
+
+        foreach (var id in profile.Install)
+        {
+            if (byId.TryGetValue(id, out var known))
+            {
+                known.IsSelected = true;
+                continue;
+            }
+
+            // Not in the catalogue: keep it, in its own category, so it still gets installed.
+            var entry = new AppEntry
+            {
+                Id = id,
+                Name = profile.Names.TryGetValue(id, out var label) ? label : PrettyName(id),
+                Publisher = "from profile",
+                Description = "Added from a profile. Not part of the built-in catalogue.",
+                Category = FromProfileCategory,
+                FromProfile = true,
+                IsSelected = true
+            };
+
+            entry.PropertyChanged += OnItemPropertyChanged;
+            _apps.Add(entry);
+            byId[id] = entry;
+            added++;
+        }
+
+        foreach (var tweak in _tweaks)
+            if (profile.Settings.Contains(tweak.Name)) tweak.IsSelected = true;
+
+        foreach (var bloat in _bloat)
+            if (profile.Remove.Contains(bloat.PackageName)) bloat.IsSelected = true;
+
+        if (added > 0) EnsureProfileCategory(added);
+
+        RefreshView();
+        RefreshSelection();
+
+        var summary = $"{profile.Install.Count} program(s), {profile.Settings.Count} setting(s) " +
+                      $"and {profile.Remove.Count} removal(s) selected.";
+        if (added > 0) summary += $"\n\n{added} of them are not in the built-in catalogue and were " +
+                                  "added under \"From profile\".";
+
+        MessageBox.Show(summary, "FreshWin");
+    }
+
+    private const string FromProfileCategory = "From profile";
+
+    private void EnsureProfileCategory(int added)
+    {
+        var row = Categories.FirstOrDefault(c => c.Name == FromProfileCategory);
+
+        if (row is null)
+        {
+            Categories.Add(new CategoryEntry
+            {
+                Name = FromProfileCategory,
+                Icon = "M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h4",
+                Total = added
+            });
+        }
+        else
+        {
+            row.Total = _apps.Count(a => a.Category == FromProfileCategory);
+        }
+
+        Categories[0].Total = _apps.Count;
     }
 
     // ---------------------------------------------------------------- reverting

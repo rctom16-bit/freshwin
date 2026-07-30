@@ -570,4 +570,52 @@
         </Style.Triggers>
     </Style>
 
+    <Style x:Key="InstalledPill" TargetType="Border" BasedOn="{StaticResource PillBase}">
+        <Setter Property="Background" Value="#16342A" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsPresent}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="PresentPill" TargetType="Border" BasedOn="{StaticResource PillBase}">
+        <Setter Property="Background" Value="#38290F" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding ShowAsPresent}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="GonePill" TargetType="Border" BasedOn="{StaticResource PillBase}">
+        <Setter Property="Background" Value="#1B1F2B" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding ShowAsGone}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="CautionNote" TargetType="TextBlock">
+        <Setter Property="Visibility" Value="Collapsed" />
+        <Setter Property="FontSize" Value="10.5" />
+        <Setter Property="Foreground" Value="#E9C889" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding HasCaution}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="CautionIcon" TargetType="Path">
+        <Setter Property="Visibility" Value="Collapsed" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding HasCaution}" Value="True">
+                <Setter Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
 </ResourceDictionary>

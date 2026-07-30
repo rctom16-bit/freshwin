@@ -15,6 +15,17 @@ public sealed class AppEntry : QueueItem
 
     public bool IsFromStore => Source == "msstore";
 
+    /// <summary>True when this package showed up in the scan of the current PC.</summary>
+    private bool _isPresent;
+    public bool IsPresent
+    {
+        get => _isPresent;
+        set => Set(ref _isPresent, value);
+    }
+
+    /// <summary>Set for entries pulled in from a profile rather than the built-in catalogue.</summary>
+    public bool FromProfile { get; init; }
+
     public override string Subtitle => Id;
 
     public override string StatusText => Status switch

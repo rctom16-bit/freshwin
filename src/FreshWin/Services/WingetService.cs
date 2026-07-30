@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using FreshWin.Models;
 
@@ -141,6 +142,76 @@ public sealed class WingetService
         }
 
         return process.ExitCode;
+    }
+
+    /// <summary>
+    /// Every winget package id installed on this PC, via <c>winget export</c>. That writes
+    /// real JSON, which beats parsing the localised table `winget list` prints.
+    /// </summary>
+    public async Task<List<string>> ExportInstalledAsync(CancellationToken ct)
+    {
+        var ids = new List<string>();
+        if (ExecutablePath is null) return ids;
+
+        var temp = Path.Combine(Path.GetTempPath(), $"freshwin-export-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            var psi = new ProcessStartInfo(ExecutablePath)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8
+            };
+
+            psi.ArgumentList.Add("export");
+            psi.ArgumentList.Add("-o");
+            psi.ArgumentList.Add(temp);
+            psi.ArgumentList.Add("--accept-source-agreements");
+            psi.ArgumentList.Add("--disable-interactivity");
+
+            using var process = Process.Start(psi);
+            if (process is null) return ids;
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(TimeSpan.FromMinutes(2));
+
+            _ = process.StandardOutput.ReadToEndAsync(cts.Token);
+            _ = process.StandardError.ReadToEndAsync(cts.Token);
+            await process.WaitForExitAsync(cts.Token);
+
+            if (!File.Exists(temp)) return ids;
+
+            using var document = JsonDocument.Parse(await File.ReadAllTextAsync(temp, ct));
+            if (!document.RootElement.TryGetProperty("Sources", out var sources)) return ids;
+
+            foreach (var source in sources.EnumerateArray())
+            {
+                if (!source.TryGetProperty("Packages", out var packages)) continue;
+
+                foreach (var package in packages.EnumerateArray())
+                {
+                    if (package.TryGetProperty("PackageIdentifier", out var id) &&
+                        id.GetString() is { Length: > 0 } value)
+                    {
+                        ids.Add(value);
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // A failed scan just leaves the cards without an "installed" badge.
+        }
+        finally
+        {
+            try { if (File.Exists(temp)) File.Delete(temp); } catch { /* temp file */ }
+        }
+
+        return ids;
     }
 
     /// <summary>Strips terminal escapes and winget's redrawn progress bars from a log line.</summary>

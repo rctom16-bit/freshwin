@@ -229,6 +229,10 @@
                                     Content="Select all shown" Click="SelectAllShown_Click" />
                             <Button Style="{StaticResource ChipButton}" Margin="8,0,0,0"
                                     Content="Clear" Click="ClearPane_Click" />
+                            <Button x:Name="BloatFilterButton" Style="{StaticResource ChipButton}"
+                                    Margin="8,0,0,0" Content="Show all" Visibility="Collapsed"
+                                    Click="ToggleBloatFilter_Click"
+                                    ToolTip="By default only apps that are actually installed here are listed" />
                         </StackPanel>
                     </Grid>
                 </Grid>

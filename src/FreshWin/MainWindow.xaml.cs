@@ -41,6 +41,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _isRunning;
     private bool _stopRequested;
     private bool _syncingNav;
+    private bool _onlyPresentBloat = true;
+    private bool _bloatScanned;
     private bool _ready;
 
     public MainWindow()
@@ -144,7 +146,6 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         TweakEngine.RefreshState(_tweaks);
-        _ = AppxService.RefreshStateAsync(_bloat, CancellationToken.None);
         UndoButton.IsEnabled = _engine.UndoFiles().Count > 0;
         TitleBarHint.Text = IsElevated() ? "administrator" : "";
 
@@ -171,9 +172,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 BannerActionKind.RestartElevated);
         }
 
-        if (_winget.IsAvailable) await ScanInstalledAsync();
-
         SearchInput.Focus();
+
+        // Both scans shell out, so they run after the window is already usable.
+        await AppxService.RefreshStateAsync(_bloat, CancellationToken.None);
+        OnBloatScanFinished();
+
+        if (_winget.IsAvailable) await ScanInstalledAsync();
     }
 
     private static bool IsElevated()
@@ -354,8 +359,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 "Tick everything you want, then hit Install – the rest is automatic."),
             Pane.Tweaks => ("Tune Windows",
                 "Only documented, reversible settings. Every change is recorded so it can be undone."),
-            _ => ("Remove preinstalled apps",
-                "A short, named list – not a debloat script. Everything here can be reinstalled from the Store.")
+            _ => ("Remove preinstalled apps", BloatSubtitle())
         };
 
         RefreshView();
@@ -379,8 +383,75 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private bool ShowBloat(BloatApp bloat)
     {
+        // Hiding what is not installed keeps the page down to what is actually
+        // actionable. Anything still unknown stays visible.
+        if (_onlyPresentBloat && _bloatScanned && bloat.IsPresent == false) return false;
+
         if (!string.IsNullOrWhiteSpace(_search)) return bloat.Matches(_search);
         return _bloatGroup is null || _bloatGroup.IsAll || bloat.Group == _bloatGroup.Name;
+    }
+
+    private void RefreshBloatCounts()
+    {
+        // When the list is filtered down to what is installed, the badge is redundant.
+        foreach (var bloat in _bloat) bloat.LabelPresence = !_onlyPresentBloat || !_bloatScanned;
+
+        foreach (var group in BloatGroups)
+        {
+            var items = group.IsAll ? _bloat : _bloat.Where(b => b.Group == group.Name);
+            group.Total = _onlyPresentBloat && _bloatScanned
+                ? items.Count(b => b.IsPresent != false)
+                : items.Count();
+        }
+    }
+
+    /// <summary>Called once the machine scan has answered for every package.</summary>
+    private void OnBloatScanFinished()
+    {
+        _bloatScanned = _bloat.Any(b => b.IsPresent is not null);
+
+        RefreshBloatCounts();
+        UpdateBloatChip();
+        RefreshView();
+
+        if (_pane == Pane.Remove) PaneSubtitle = BloatSubtitle();
+    }
+
+    private string BloatSubtitle()
+    {
+        if (!_bloatScanned)
+            return "A short, named list – not a debloat script. Everything here can be reinstalled from the Store.";
+
+        var present = _bloat.Count(b => b.IsPresent == true);
+
+        if (present == 0)
+            return $"None of the {_bloat.Count} apps on this list are installed here. Nothing to do.";
+
+        return _onlyPresentBloat
+            ? $"{present} of {_bloat.Count} are on this PC – the rest are hidden. Everything here can be reinstalled from the Store."
+            : $"Showing all {_bloat.Count}, of which {present} are on this PC. Everything here can be reinstalled from the Store.";
+    }
+
+    private void UpdateBloatChip()
+    {
+        BloatFilterButton.Visibility = _bloatScanned ? Visibility.Visible : Visibility.Collapsed;
+        BloatFilterButton.Content = _onlyPresentBloat
+            ? $"Show all {_bloat.Count}"
+            : "Only what is here";
+    }
+
+    private void ToggleBloatFilter_Click(object sender, RoutedEventArgs e)
+    {
+        _onlyPresentBloat = !_onlyPresentBloat;
+
+        // Never leave something ticked that is now hidden.
+        if (_onlyPresentBloat)
+            foreach (var bloat in _bloat.Where(b => b.IsPresent == false)) bloat.IsSelected = false;
+
+        RefreshBloatCounts();
+        UpdateBloatChip();
+        RefreshView();
+        PaneSubtitle = BloatSubtitle();
     }
 
     private void RefreshView()
@@ -740,7 +811,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         TweakEngine.RefreshState(_tweaks);
-        _ = AppxService.RefreshStateAsync(_bloat, CancellationToken.None);
+        _ = AppxService.RefreshStateAsync(_bloat, CancellationToken.None)
+            .ContinueWith(_ => Dispatcher.InvokeAsync(OnBloatScanFinished),
+                          TaskScheduler.Default);
 
         RunPage.Visibility = Visibility.Collapsed;
         PickPage.Visibility = Visibility.Visible;

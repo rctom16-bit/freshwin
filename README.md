@@ -33,9 +33,14 @@ changes.
 
 **Remove — 28 preinstalled apps** that Windows and OEMs put on a new PC: News, Weather,
 Maps, Tips, Solitaire, Clipchamp, Paint 3D, 3D Viewer, Mixed Reality Portal, Cortana, the
-consumer Teams, Skype, People and the rest. Cards say whether the app is actually **on this
-PC**, and ones with a real downside carry a short warning ("this is the default music
-player"). A **Recommended** preset ticks the 16 nobody misses.
+consumer Teams, Skype, People and the rest.
+
+The page scans the machine first and **only lists what is actually installed here** — a
+fresh Windows ships maybe twenty of the twenty-eight, and a list full of apps you do not
+have is just noise. The heading says how many were found ("23 of 28 are on this PC"), and
+**Show all** brings back the rest if you want to look. Apps with a real downside carry a
+short warning ("this is the default music player"). A **Recommended** preset ticks the 16
+nobody misses, and never ticks something that is not there.
 
 This is a short, named list, not a debloat script. Nothing that belongs to the shell is in
 it: no Store, no App Installer (which provides winget), no Snipping Tool, no Terminal, no

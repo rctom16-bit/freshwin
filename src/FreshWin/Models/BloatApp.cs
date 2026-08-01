@@ -31,7 +31,21 @@ public sealed class BloatApp : QueueItem
         }
     }
 
-    public bool ShowAsPresent => IsPresent == true;
+    private bool _labelPresence;
+    /// <summary>
+    /// Only worth showing "on this PC" while the list also contains apps that are not.
+    /// With the default filter every visible card would carry the same badge.
+    /// </summary>
+    public bool LabelPresence
+    {
+        get => _labelPresence;
+        set
+        {
+            if (Set(ref _labelPresence, value)) OnPropertyChanged(nameof(ShowAsPresent));
+        }
+    }
+
+    public bool ShowAsPresent => IsPresent == true && LabelPresence;
     public bool ShowAsGone => IsPresent == false;
 
     public override string Subtitle => PackageName;

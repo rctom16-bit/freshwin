@@ -14,7 +14,18 @@ public sealed class CategoryEntry : INotifyPropertyChanged
     /// <summary>True for the synthetic "All apps" row.</summary>
     public bool IsAll { get; init; }
 
-    public int Total { get; set; }
+    private int _total;
+    public int Total
+    {
+        get => _total;
+        set
+        {
+            if (_total == value) return;
+            _total = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(BadgeLabel));
+        }
+    }
 
     private int _selectedCount;
     public int SelectedCount

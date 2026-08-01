@@ -7,22 +7,7 @@ silent installs, one after another, no clicking through setup wizards.
 It is a single portable `FreshWin.exe`. Nothing to install, no runtime to download, no
 config files to edit.
 
-```
-┌─ FreshWin ──────────────────────────────────────────────────────────────┐
-│ SOFTWARE       │  Set up this PC                                        │
-│  All apps  91  │  Tick everything you want, then hit Install            │
-│  Browsers   7  │  [search…]     ★ Essentials  Select all shown  Clear   │
-│  Media      8  │                                                        │
-│  …             │  ┌────────────────┐ ┌────────────────┐ ┌─────────────┐ │
-│                │  │ GC  Google     │ │ MF  Mozilla  ✓ │ │ 7Z  7-Zip ✓ │ │
-│ TUNE WINDOWS   │  │     Chrome     │ │     Firefox    │ │             │ │
-│  All settings 40  └────────────────┘ └────────────────┘ └─────────────┘ │
-│  Privacy      10                                                        │
-│  Performance   9                                                        │
-│ REMOVE            12 apps + 5 settings + 3 removals selected            │
-│  All preinst. 28                                 [ Install selected → ] │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+![Picking software](docs/software.png)
 
 ## What it does
 
@@ -44,6 +29,8 @@ The first item is **Create a restore point** — it is hoisted to the front of t
 of every install, so there is a System Restore snapshot to fall back on before anything
 changes.
 
+![Tuning Windows](docs/tune.png)
+
 **Remove — 28 preinstalled apps** that Windows and OEMs put on a new PC: News, Weather,
 Maps, Tips, Solitaire, Clipchamp, Paint 3D, 3D Viewer, Mixed Reality Portal, Cortana, the
 consumer Teams, Skype, People and the rest. Cards say whether the app is actually **on this
@@ -55,9 +42,13 @@ it: no Store, no App Installer (which provides winget), no Snipping Tool, no Ter
 runtime libraries. **Removals are the one thing the undo file cannot restore** — the way
 back is reinstalling from the Microsoft Store.
 
+![Removing preinstalled apps](docs/remove.png)
+
 All three lists feed one run page with live per-item status, overall progress and a details
 log carrying winget's own output and every registry value written. A restore point runs
 first, then removals, then installs, then settings.
+
+![The run page](docs/run.png)
 
 ## Profiles: set up the next PC like this one
 

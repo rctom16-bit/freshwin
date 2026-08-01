@@ -40,7 +40,7 @@ public static class Catalog
         // ---------------------------------------------------------------- Browsers
         new() { Id = "Google.Chrome", Name = "Google Chrome", Publisher = "Google", Category = Browsers, Essential = true,
                 Description = "The browser most websites are built and tested against." },
-        new() { Id = "Mozilla.Firefox", Name = "Mozilla Firefox", Publisher = "Mozilla", Category = Browsers, Essential = true,
+        new() { Id = "Mozilla.Firefox", Name = "Mozilla Firefox", Publisher = "Mozilla", Category = Browsers,
                 Description = "Independent, privacy-minded browser with strong tracking protection." },
         new() { Id = "Brave.Brave", Name = "Brave", Publisher = "Brave Software", Category = Browsers,
                 Description = "Chromium browser that blocks ads and trackers out of the box." },
@@ -54,7 +54,7 @@ public static class Catalog
                 Description = "Routes traffic through the Tor network for anonymous browsing." },
 
         // ----------------------------------------------------------- Communication
-        new() { Id = "Discord.Discord", Name = "Discord", Publisher = "Discord Inc.", Category = Communication, Essential = true,
+        new() { Id = "Discord.Discord", Name = "Discord", Publisher = "Discord Inc.", Category = Communication,
                 Description = "Voice, video and text chat built around communities and gaming." },
         new() { Id = "Zoom.Zoom", Name = "Zoom", Publisher = "Zoom", Category = Communication,
                 Description = "Video meetings and webinars – the usual default for external calls." },
@@ -74,7 +74,7 @@ public static class Catalog
         // ------------------------------------------------------------------- Media
         new() { Id = "VideoLAN.VLC", Name = "VLC media player", Publisher = "VideoLAN", Category = Media, Essential = true,
                 Description = "Plays essentially every video and audio format without extra codecs." },
-        new() { Id = "Spotify.Spotify", Name = "Spotify", Publisher = "Spotify AB", Category = Media, Essential = true,
+        new() { Id = "Spotify.Spotify", Name = "Spotify", Publisher = "Spotify AB", Category = Media,
                 Description = "Music and podcast streaming desktop client." },
         new() { Id = "CodecGuide.K-LiteCodecPack.Standard", Name = "K-Lite Codec Pack", Publisher = "Codec Guide", Category = Media,
                 Description = "Codec bundle plus MPC-HC for playing awkward media files." },
@@ -90,7 +90,7 @@ public static class Catalog
                 Description = "Converts and compresses video into modern formats." },
 
         // ---------------------------------------------------------------- Creative
-        new() { Id = "ShareX.ShareX", Name = "ShareX", Publisher = "ShareX Team", Category = Creative, Essential = true,
+        new() { Id = "ShareX.ShareX", Name = "ShareX", Publisher = "ShareX Team", Category = Creative,
                 Description = "Screenshots, screen recording, OCR and instant uploads." },
         new() { Id = "GIMP.GIMP", Name = "GIMP", Publisher = "GIMP Team", Category = Creative,
                 Description = "Full-featured free image editor – the classic Photoshop stand-in." },
@@ -112,7 +112,7 @@ public static class Catalog
                 Description = "Desktop app for collaborative interface design." },
 
         // ------------------------------------------------------------------ Gaming
-        new() { Id = "Valve.Steam", Name = "Steam", Publisher = "Valve", Category = Gaming, Essential = true,
+        new() { Id = "Valve.Steam", Name = "Steam", Publisher = "Valve", Category = Gaming,
                 Description = "The main PC games store and library manager." },
         new() { Id = "EpicGames.EpicGamesLauncher", Name = "Epic Games Launcher", Publisher = "Epic Games", Category = Gaming,
                 Description = "Fortnite, Unreal Engine and the weekly free game giveaways." },
@@ -130,11 +130,11 @@ public static class Catalog
                 Description = "One unified library and launcher for all your game stores." },
 
         // ------------------------------------------------------------- Development
-        new() { Id = "Microsoft.VisualStudioCode", Name = "Visual Studio Code", Publisher = "Microsoft", Category = Development, Essential = true,
+        new() { Id = "Microsoft.VisualStudioCode", Name = "Visual Studio Code", Publisher = "Microsoft", Category = Development,
                 Description = "The default code editor for most languages, with a huge extension market." },
-        new() { Id = "Git.Git", Name = "Git", Publisher = "Git", Category = Development, Essential = true,
+        new() { Id = "Git.Git", Name = "Git", Publisher = "Git", Category = Development,
                 Description = "Version control – required by nearly every dev toolchain." },
-        new() { Id = "Notepad++.Notepad++", Name = "Notepad++", Publisher = "Notepad++ Team", Category = Development, Essential = true,
+        new() { Id = "Notepad++.Notepad++", Name = "Notepad++", Publisher = "Notepad++ Team", Category = Development,
                 Description = "Fast text editor for quick edits, logs and config files." },
         new() { Id = "Microsoft.WindowsTerminal", Name = "Windows Terminal", Publisher = "Microsoft", Category = Development,
                 Description = "Tabbed terminal for PowerShell, CMD and WSL." },
@@ -164,9 +164,9 @@ public static class Catalog
                 Description = "Captures and dissects network traffic packet by packet." },
 
         // ---------------------------------------------------------------- Utilities
-        new() { Id = "Microsoft.PowerToys", Name = "Microsoft PowerToys", Publisher = "Microsoft", Category = Utilities, Essential = true,
+        new() { Id = "Microsoft.PowerToys", Name = "Microsoft PowerToys", Publisher = "Microsoft", Category = Utilities,
                 Description = "FancyZones, PowerRename, Run, colour picker – the power-user pack." },
-        new() { Id = "voidtools.Everything", Name = "Everything", Publisher = "voidtools", Category = Utilities, Essential = true,
+        new() { Id = "voidtools.Everything", Name = "Everything", Publisher = "voidtools", Category = Utilities,
                 Description = "Instant filename search – finds any file the moment you type." },
         new() { Id = "CPUID.CPU-Z", Name = "CPU-Z", Publisher = "CPUID", Category = Utilities,
                 Description = "Reports exactly which CPU, RAM and mainboard you have." },
@@ -206,13 +206,13 @@ public static class Catalog
                 Description = "Microsoft cloud storage integrated with Windows and Office." },
 
         // -------------------------------------------------------------- Documents
-        new() { Id = "TheDocumentFoundation.LibreOffice", Name = "LibreOffice", Publisher = "The Document Foundation", Category = Documents, Essential = true,
+        new() { Id = "TheDocumentFoundation.LibreOffice", Name = "LibreOffice", Publisher = "The Document Foundation", Category = Documents,
                 Description = "Free office suite that reads and writes Word, Excel and PowerPoint files." },
         new() { Id = "ONLYOFFICE.DesktopEditors", Name = "ONLYOFFICE", Publisher = "Ascensio System", Category = Documents,
                 Description = "Office suite with the closest match to Microsoft formatting." },
-        new() { Id = "SumatraPDF.SumatraPDF", Name = "SumatraPDF", Publisher = "Krzysztof Kowalczyk", Category = Documents, Essential = true,
+        new() { Id = "SumatraPDF.SumatraPDF", Name = "SumatraPDF", Publisher = "Krzysztof Kowalczyk", Category = Documents,
                 Description = "Tiny, instant PDF and e-book reader." },
-        new() { Id = "Adobe.Acrobat.Reader.64-bit", Name = "Adobe Acrobat Reader", Publisher = "Adobe", Category = Documents,
+        new() { Id = "Adobe.Acrobat.Reader.64-bit", Name = "Adobe Acrobat Reader", Publisher = "Adobe", Category = Documents, Essential = true,
                 Description = "The reference PDF reader, for forms and signatures." },
         new() { Id = "Obsidian.Obsidian", Name = "Obsidian", Publisher = "Obsidian", Category = Documents,
                 Description = "Markdown notes stored as plain files you own." },

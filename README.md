@@ -13,8 +13,14 @@ config files to edit.
 
 **Software — 91 programs** grouped into Browsers, Communication, Media, Creative, Gaming,
 Development, Utilities, Files & Backup, Documents, Security and Runtimes. Every package id
-is verified against the official winget index. An **Essentials** preset ticks the 18 apps
-almost every PC wants.
+is verified against the official winget index.
+
+An **Essentials** preset ticks seven things worth having on any PC regardless of what it is
+for: Chrome, VLC, 7-Zip, Adobe Acrobat Reader, Bitwarden, and the Visual C++ and .NET
+runtimes that a large share of other software expects. It is deliberately short — a preset
+you can tick without reading is only useful if nothing in it is a matter of taste. Steam,
+Discord, VS Code, LibreOffice and the rest are all in the catalogue, one click away, but
+they belong to a particular kind of user rather than to everyone.
 
 **Tune Windows — 40 settings** across Safety, File Explorer, Taskbar & Start, Appearance,
 Privacy and Performance: show file extensions, open Explorer on This PC, hide the Widgets

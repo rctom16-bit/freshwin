@@ -40,7 +40,7 @@ public static class Catalog
         // ---------------------------------------------------------------- Browsers
         new() { Id = "Google.Chrome", Name = "Google Chrome", Publisher = "Google", Category = Browsers, Essential = true,
                 Description = "The browser most websites are built and tested against." },
-        new() { Id = "Mozilla.Firefox", Name = "Mozilla Firefox", Publisher = "Mozilla", Category = Browsers,
+        new() { Id = "Mozilla.Firefox", Name = "Mozilla Firefox", Publisher = "Mozilla", Category = Browsers, Essential = true,
                 Description = "Independent, privacy-minded browser with strong tracking protection." },
         new() { Id = "Brave.Brave", Name = "Brave", Publisher = "Brave Software", Category = Browsers,
                 Description = "Chromium browser that blocks ads and trackers out of the box." },
@@ -48,13 +48,15 @@ public static class Catalog
                 Description = "Ships with Windows – install to force it to the newest build." },
         new() { Id = "Opera.Opera", Name = "Opera", Publisher = "Opera", Category = Browsers,
                 Description = "Browser with a built-in VPN, ad blocker and messenger sidebar." },
+        new() { Id = "Opera.OperaGX", Name = "Opera GX", Publisher = "Opera", Category = Browsers,
+                Description = "Browser built for gaming: caps its own CPU, RAM and network use, with Twitch and Discord in the sidebar." },
         new() { Id = "Vivaldi.Vivaldi", Name = "Vivaldi", Publisher = "Vivaldi Technologies", Category = Browsers,
                 Description = "Highly customisable browser with tab stacks and built-in mail." },
         new() { Id = "TorProject.TorBrowser", Name = "Tor Browser", Publisher = "The Tor Project", Category = Browsers,
                 Description = "Routes traffic through the Tor network for anonymous browsing." },
 
         // ----------------------------------------------------------- Communication
-        new() { Id = "Discord.Discord", Name = "Discord", Publisher = "Discord Inc.", Category = Communication,
+        new() { Id = "Discord.Discord", Name = "Discord", Publisher = "Discord Inc.", Category = Communication, Essential = true,
                 Description = "Voice, video and text chat built around communities and gaming." },
         new() { Id = "Zoom.Zoom", Name = "Zoom", Publisher = "Zoom", Category = Communication,
                 Description = "Video meetings and webinars – the usual default for external calls." },
@@ -74,7 +76,7 @@ public static class Catalog
         // ------------------------------------------------------------------- Media
         new() { Id = "VideoLAN.VLC", Name = "VLC media player", Publisher = "VideoLAN", Category = Media, Essential = true,
                 Description = "Plays essentially every video and audio format without extra codecs." },
-        new() { Id = "Spotify.Spotify", Name = "Spotify", Publisher = "Spotify AB", Category = Media,
+        new() { Id = "Spotify.Spotify", Name = "Spotify", Publisher = "Spotify AB", Category = Media, Essential = true,
                 Description = "Music and podcast streaming desktop client." },
         new() { Id = "CodecGuide.K-LiteCodecPack.Standard", Name = "K-Lite Codec Pack", Publisher = "Codec Guide", Category = Media,
                 Description = "Codec bundle plus MPC-HC for playing awkward media files." },
@@ -112,7 +114,7 @@ public static class Catalog
                 Description = "Desktop app for collaborative interface design." },
 
         // ------------------------------------------------------------------ Gaming
-        new() { Id = "Valve.Steam", Name = "Steam", Publisher = "Valve", Category = Gaming,
+        new() { Id = "Valve.Steam", Name = "Steam", Publisher = "Valve", Category = Gaming, Essential = true,
                 Description = "The main PC games store and library manager." },
         new() { Id = "EpicGames.EpicGamesLauncher", Name = "Epic Games Launcher", Publisher = "Epic Games", Category = Gaming,
                 Description = "Fortnite, Unreal Engine and the weekly free game giveaways." },

@@ -11,16 +11,19 @@ config files to edit.
 
 ## What it does
 
-**Software — 91 programs** grouped into Browsers, Communication, Media, Creative, Gaming,
+**Software — 92 programs** grouped into Browsers, Communication, Media, Creative, Gaming,
 Development, Utilities, Files & Backup, Documents, Security and Runtimes. Every package id
 is verified against the official winget index.
 
-An **Essentials** preset ticks seven things worth having on any PC regardless of what it is
-for: Chrome, VLC, 7-Zip, Adobe Acrobat Reader, Bitwarden, and the Visual C++ and .NET
-runtimes that a large share of other software expects. It is deliberately short — a preset
-you can tick without reading is only useful if nothing in it is a matter of taste. Steam,
-Discord, VS Code, LibreOffice and the rest are all in the catalogue, one click away, but
-they belong to a particular kind of user rather than to everyone.
+An **Essentials** preset ticks eleven: Chrome, Firefox, VLC, Spotify, Discord, Steam,
+7-Zip, Adobe Acrobat Reader, Bitwarden, and the Visual C++ and .NET runtimes that a large
+share of other software expects.
+
+What is not in it is deliberate. LibreOffice duplicates every application and takes over
+the file associations on a PC that already has Microsoft 365. The developer tools sit in
+their own category, which is easier to find than a preset. SumatraPDF is smaller and faster
+than Acrobat Reader but cannot fill in forms or handle signatures, which is most of what a
+PDF reader gets opened for. All of them are still in the catalogue, one click away.
 
 **Tune Windows — 40 settings** across Safety, File Explorer, Taskbar & Start, Appearance,
 Privacy and Performance: show file extensions, open Explorer on This PC, hide the Widgets

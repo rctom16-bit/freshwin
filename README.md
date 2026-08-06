@@ -126,8 +126,43 @@ cd freshwin
 dotnet publish src/FreshWin/FreshWin.csproj -c Release -o publish
 ```
 
-`publish\FreshWin.exe` is self-contained (~66 MB) and runs on a PC with no .NET installed —
+`publish\FreshWin.exe` is self-contained (~63 MB) and runs on a PC with no .NET installed —
 which is the point, since a fresh Windows install has no runtime yet.
+
+## When Windows warns about the download
+
+Expect it, at least at first. Edge or Defender may refuse `FreshWin.exe`, sometimes as
+"not commonly downloaded", sometimes as an outright detection such as `Wacatac`.
+
+Two things cause it, and neither is evidence of anything being wrong:
+
+- **The file is not code-signed.** A certificate costs real money, so this is an unsigned
+  build. SmartScreen judges reputation, and a binary that is hours old with no download
+  history has none.
+- **It is a single-file .NET bundle** — one 63 MB blob that unpacks itself at start-up.
+  That shape is a well-known source of antivirus false positives.
+
+What you can do:
+
+1. **Take the portable build instead.** Every build also produces
+   `FreshWin-portable.zip`: exactly the same code published as an ordinary folder of DLLs
+   rather than a self-extracting bundle. Unzip it anywhere and run `FreshWin.exe` from
+   inside. This form is flagged far less often.
+2. **Check it yourself rather than trusting anyone.** `SHA256SUMS.txt` ships with every
+   build. Verify with `Get-FileHash FreshWin.exe -Algorithm SHA256` and compare, then put
+   the file through [VirusTotal](https://www.virustotal.com) if you want a second opinion —
+   a couple of no-name engines objecting while the major ones stay quiet is the usual
+   signature of a false positive.
+3. **Read the source and build it yourself.** Everything is in this repository, and CI
+   builds it on GitHub's own runners from exactly this source, so nothing passes through a
+   third party in between.
+4. **Report the false positive** at
+   [Microsoft's submission page](https://www.microsoft.com/en-us/wdsi/filesubmission).
+   Those are usually resolved within a day or two, and it helps everyone downloading later.
+
+To keep the file after Edge blocks it: Ctrl+J for downloads, then the "..." menu on the
+entry, **Keep**, and confirm. If Defender quarantined it, Windows Security → Protection
+history → **Allow on device**.
 
 Building needs the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0). The
 project sets `EnableWindowsTargeting`, so it also builds on Linux and macOS CI runners (it

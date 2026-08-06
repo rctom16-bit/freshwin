@@ -92,9 +92,9 @@ public static class AppxService
             StandardErrorEncoding = Encoding.UTF8
         };
 
+        // No -ExecutionPolicy: it only governs script files, never -Command, and its
+        // presence in a binary is one of the strongest signals antivirus heuristics use.
         psi.ArgumentList.Add("-NoProfile");
-        psi.ArgumentList.Add("-ExecutionPolicy");
-        psi.ArgumentList.Add("Bypass");
         psi.ArgumentList.Add("-Command");
         psi.ArgumentList.Add(script);
 

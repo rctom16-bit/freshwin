@@ -50,7 +50,7 @@ public static class Tweaks
             Group = Safety, Recommended = true, RequiresAdmin = true, RunFirst = true,
             ApplyCommand = new[]
             {
-                "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
+                "powershell", "-NoProfile", "-Command",
                 @"Enable-ComputerRestore -Drive ""$env:SystemDrive""; " +
                 @"Checkpoint-Computer -Description 'FreshWin' -RestorePointType MODIFY_SETTINGS"
             }

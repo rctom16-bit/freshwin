@@ -134,13 +134,22 @@ which is the point, since a fresh Windows install has no runtime yet.
 Expect it, at least at first. Edge or Defender may refuse `FreshWin.exe`, sometimes as
 "not commonly downloaded", sometimes as an outright detection such as `Wacatac`.
 
-Two things cause it, and neither is evidence of anything being wrong:
+Three things cause it:
 
 - **The file is not code-signed.** A certificate costs real money, so this is an unsigned
   build. SmartScreen judges reputation, and a binary that is hours old with no download
   history has none.
 - **It is a single-file .NET bundle** — one 63 MB blob that unpacks itself at start-up.
   That shape is a well-known source of antivirus false positives.
+- **It does the things this kind of tool has to do.** Removing Store apps, writing policy
+  registry keys, restarting Explorer, shelling out to PowerShell and `powercfg` — that is
+  the job description, and it is also indistinguishable from what unwanted software does.
+  Setup and debloat tools are routinely filed under PUA or HackTool for exactly this
+  reason, so expect the warning to persist even once the file has a download history.
+
+What FreshWin does **not** do: no network access of its own, no background service, no
+scheduled task, no startup entry, no telemetry. It runs winget, reads and writes the
+documented registry values listed on each card, and exits.
 
 What you can do:
 
